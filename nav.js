@@ -11,8 +11,8 @@
     { id: 'photo',     file: 'photo.html',     label: 'Photo',     icon: '\u{1F4F7}' }
   ];
   var TITLES = {
-    countdown: 'Race Start Countdown',
-    adverse: 'Adverse Weather',
+    countdown: 'BTCC Race Start Countdown',
+    adverse: 'BTCC Adverse Weather Procedure',
     support: 'Support Race Timing',
     photo: 'Send Photo to Clerk'
   };
