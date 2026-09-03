@@ -5,7 +5,7 @@ and an incident-photo report tool.
 
 ## Live site
 
-**https://stalwart-pasca-9864aa.netlify.app/** — hosted on Netlify, auto-deploys
+**https://btcc-startline.netlify.app/** — hosted on Netlify, auto-deploys
 from this repo (`btcc-startline`, branch `main`) on every push. Share this link.
 
 (An older copy at `jmendelsohn2.github.io/btcc-startline/` has no send function —
