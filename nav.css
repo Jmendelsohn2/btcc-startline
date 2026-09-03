@@ -3,6 +3,9 @@
 
 :root { color-scheme: dark; }
 
+/* Hide Netlify's injected "Powered by Netlify" badge (free-plan HUD iframe). */
+#nl-badge-frame, #nl-hud-frame { display: none !important; }
+
 .appbar {
   background: #000;
   border-bottom: 1px solid #1a1a1a;

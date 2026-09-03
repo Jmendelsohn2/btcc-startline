@@ -62,6 +62,20 @@
   window.addEventListener('resize', pad);
   window.addEventListener('orientationchange', function () { setTimeout(pad, 200); });
 
+  // ---- strip Netlify's injected "Powered by Netlify" badge ----
+  (function () {
+    var kill = function () {
+      ['nl-badge-frame', 'nl-hud-frame'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.remove();
+      });
+    };
+    kill();
+    var mo = new MutationObserver(kill);
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+    setTimeout(function () { mo.disconnect(); }, 15000);
+  })();
+
   // ---- service worker ----
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(function () {});

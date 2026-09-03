@@ -12,6 +12,7 @@
 <title>BTCC Startline</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  #nl-badge-frame,#nl-hud-frame{display:none!important}
   html,body{background:#0a0a0a}
   body{color:#f0f0f0;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;min-height:100vh;min-height:-webkit-fill-available;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
   .wrap{padding:16px 16px 32px}
@@ -52,6 +53,13 @@
   <div class="foot">BTCC Startline &middot; add to Home Screen to use offline</div>
 </div>
 <script>
+  (function(){
+    var kill=function(){['nl-badge-frame','nl-hud-frame'].forEach(function(id){var el=document.getElementById(id);if(el)el.remove();});};
+    kill();
+    var mo=new MutationObserver(kill);
+    mo.observe(document.documentElement,{childList:true,subtree:true});
+    setTimeout(function(){mo.disconnect();},15000);
+  })();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 </script>
 </body>
