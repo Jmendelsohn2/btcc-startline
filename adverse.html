@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#0a0a0a">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BTCC Adverse Weather">
+<meta name="theme-color" content="#0a0a0a">
+<title>BTCC Adverse Weather</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:#0a0a0a}
+  body{color:#f0f0f0;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;min-height:100vh;min-height:-webkit-fill-available;overflow-x:hidden;display:flex;flex-direction:column}
+  .checker{height:8px;background-image:repeating-conic-gradient(#fff 0% 25%,#000 0% 50%);background-size:8px 8px}
+  .banner{padding:7px 14px;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#0a0a0a;background:#c9a84c;text-align:center}
+  .inputs{padding:10px 14px 8px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .input-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:8px 12px}
+  .input-label{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#888;margin-bottom:4px}
+  input[type=number],input[type=time],input[type=text]{background:transparent;border:none;outline:none;color:#fff;font-family:'SF Mono','Courier New',monospace;font-size:20px;width:100%;-webkit-appearance:none;appearance:none;text-align:center;color-scheme:dark}
+  input[type=time]{text-align:left}
+  .clear-row{display:flex;align-items:center;gap:4px}
+  .clear-row input[type=number],.clear-row input[type=text]{width:44px;border-bottom:1.5px solid #444;padding-bottom:2px;touch-action:none}
+  .clear-row input[type=time]{width:auto;flex:1;border-bottom:1.5px solid #444;padding-bottom:2px}
+  .clear-row input:focus{border-bottom-color:#c9a84c}
+  .clear-sep{color:#666;font-size:16px;font-family:'SF Mono','Courier New',monospace}
+  .section-label{padding:5px 14px;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#c9a84c;border-top:1px solid #1e1e1e}
+  table{width:100%;border-collapse:collapse}
+  tr{border-bottom:1px solid #1a1a1a}
+  td{padding:9px 14px;vertical-align:middle}
+  td:first-child{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;font-stretch:condensed;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;width:45%}
+  td:nth-child(2){font-family:'SF Mono','Courier New',monospace;font-size:16px;text-align:right;letter-spacing:0.05em;width:28%}
+  td:last-child{font-size:12px;color:#888;font-weight:500;text-align:right;padding-left:6px}
+  .row-pitclose td:first-child{color:#e85c3a}
+  .row-pitclose td:nth-child(2){color:#e85c3a}
+  .row-pitclose td:last-child{color:#e85c3a;opacity:0.8}
+  .row-clear{background:#1c1800}
+  .row-clear td{color:#ffb300}
+  .row-clear td:last-child{color:#ffb300;opacity:0.8}
+  .row-green{background:#0a1f0a}
+  .row-green td{color:#00c853}
+  .checker-bottom{height:8px;background-image:repeating-conic-gradient(#fff 0% 25%,#000 0% 50%);background-size:8px 8px;margin-top:auto;opacity:0.3}
+</style>
+<meta name="apple-mobile-web-app-title" content="BTCC Startline">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="stylesheet" href="nav.css">
+</head>
+<body data-tool="adverse">
+<div class="checker"></div>
+<div class="banner">Adverse Weather &middot; CR 3.12.2 &middot; Countdown from 12 min</div>
+
+<div class="inputs">
+  <div class="input-card">
+    <div class="input-label">12-Min Signal</div>
+    <div class="clear-row">
+      <input type="time" id="pitOpen" value="17:08">
+      <span class="clear-sep">:</span>
+      <input type="text" inputmode="numeric" id="pitSS" value="00">
+    </div>
+  </div>
+  <div class="input-card">
+    <div class="input-label">CLEAR Interval</div>
+    <div class="clear-row">
+      <input type="text" inputmode="numeric" id="clearMM" value="07">
+      <span class="clear-sep">:</span>
+      <input type="text" inputmode="numeric" id="clearSS" value="30">
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Countdown Schedule</div>
+<table id="schedule"></table>
+<div class="checker-bottom"></div>
+
+<script>
+const ROWS=[
+  {label:'12 Minutes',offset:0,cls:'row-pitclose',note:'Pit lane closed'},
+  {label:'CLEAR',offset:null,cls:'row-clear',note:''},
+  {label:'5 Minutes',offset:420,cls:'',note:''},
+  {label:'3 Minutes',offset:540,cls:'',note:''},
+  {label:'2 Minutes',offset:600,cls:'',note:''},
+  {label:'1 Minute',offset:660,cls:'',note:''},
+  {label:'30 Seconds',offset:690,cls:'',note:'Grid to be clear'},
+  {label:'Green Flag',offset:720,cls:'row-green',note:''},
+];
+function parse(v){const p=v.split(':').map(Number);return p[0]*3600+p[1]*60+(p[2]||0)}
+function fmt(s){s=((s%86400)+86400)%86400;return[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(x=>String(x).padStart(2,'0')).join(':')}
+function render(){
+  const pit=parse(document.getElementById('pitOpen').value||'17:08')+(parseInt(document.getElementById('pitSS').value)||0);
+  const green=pit+720;
+  const ci=(parseInt(document.getElementById('clearMM').value)||0)*60+(parseInt(document.getElementById('clearSS').value)||0);
+  document.getElementById('schedule').innerHTML=ROWS.map(r=>{
+    const t=r.offset===null?green-ci:pit+r.offset;
+    return`<tr class="${r.cls}"><td>${r.label}</td><td>${fmt(t)}</td><td>${r.note}</td></tr>`;
+  }).join('');
+}
+document.getElementById('pitOpen').addEventListener('input',render);
+
+// mm/ss field: drag up/down to scrub, wheel to nudge, or tap and type.
+// Move/end are tracked on `document` so it keeps working once the finger
+// leaves the small input box.
+function scrubbable(id,min,max){
+  const input=document.getElementById(id);
+  const cl=v=>Math.max(min,Math.min(max,v));
+  const fmt=v=>String(cl(v)).padStart(2,'0');
+  let startY=0,startVal=0,active=false,moved=false,killClick=false;
+  const apply=v=>{const s=fmt(v);if(s===input.value)return;input.value=s;render();};
+  const move=y=>{
+    const dy=startY-y;
+    if(!moved){if(Math.abs(dy)<6)return;moved=true;if(document.activeElement===input)input.blur();}
+    apply(startVal+Math.round(dy/7));
+  };
+  const tMove=e=>{if(active){e.preventDefault();move(e.touches[0].clientY);}};
+  const mMove=e=>{if(active)move(e.clientY);};
+  const end=()=>{
+    if(!active)return;
+    active=false;
+    if(moved){killClick=true;setTimeout(()=>killClick=false,400);}
+    document.removeEventListener('touchmove',tMove,{passive:false});
+    document.removeEventListener('touchend',end);
+    document.removeEventListener('touchcancel',end);
+    document.removeEventListener('mousemove',mMove);
+    document.removeEventListener('mouseup',end);
+  };
+  input.addEventListener('touchstart',e=>{
+    startY=e.touches[0].clientY;startVal=cl(parseInt(input.value)||0);active=true;moved=false;
+    document.addEventListener('touchmove',tMove,{passive:false});
+    document.addEventListener('touchend',end);
+    document.addEventListener('touchcancel',end);
+  },{passive:true});
+  input.addEventListener('mousedown',e=>{
+    startY=e.clientY;startVal=cl(parseInt(input.value)||0);active=true;moved=false;
+    document.addEventListener('mousemove',mMove);
+    document.addEventListener('mouseup',end);
+  });
+  input.addEventListener('click',e=>{if(killClick){e.preventDefault();e.stopPropagation();killClick=false}});
+  input.addEventListener('wheel',e=>{e.preventDefault();apply((parseInt(input.value)||0)+(e.deltaY<0?1:-1))},{passive:false});
+  input.addEventListener('input',()=>{const c=input.value.replace(/[^0-9]/g,'').slice(0,2);if(c!==input.value)input.value=c;render();});
+  input.addEventListener('blur',()=>{input.value=fmt(parseInt(input.value)||0)});
+}
+scrubbable('pitSS',0,59);
+scrubbable('clearMM',0,14);
+scrubbable('clearSS',0,59);
+render();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

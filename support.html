@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#0a0a0a">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0a">
+<title>Support Race Timing</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:#0a0a0a}
+  body{color:#f0f0f0;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;min-height:100vh;min-height:-webkit-fill-available;overflow-x:hidden;display:flex;flex-direction:column}
+  .checker{height:8px;background-image:repeating-conic-gradient(#fff 0% 25%,#000 0% 50%);background-size:8px 8px}
+  .pad{padding:10px 14px 0}
+  .seg{display:flex;border:1px solid #2a2a2a;border-radius:10px;overflow:hidden;margin-bottom:8px}
+  .seg button{flex:1;background:#1a1a1a;border:none;border-left:1px solid #2a2a2a;color:#888;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:11px 2px}
+  .seg button:first-child{border-left:none}
+  .seg button.on{background:#c9a84c;color:#0a0a0a}
+  .inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .input-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:8px 12px}
+  .input-card.hide{display:none}
+  .input-label{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#888;margin-bottom:4px}
+  .row{display:flex;align-items:center;gap:4px}
+  input{background:transparent;border:none;outline:none;color:#fff;font-family:'SF Mono','Courier New',monospace;font-size:20px;-webkit-appearance:none;appearance:none;color-scheme:dark}
+  .row input{width:52px;text-align:center;border-bottom:1.5px solid #444;padding-bottom:2px;touch-action:none}
+  .row input:focus{border-bottom-color:#c9a84c}
+  .sep{color:#666;font-size:16px;font-family:'SF Mono','Courier New',monospace}
+  .calc{display:block;width:100%;margin-top:10px;background:#c9a84c;color:#0a0a0a;border:none;border-radius:10px;padding:13px 0;font-family:inherit;font-size:14px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase}
+  .calc:active{opacity:.85}
+  .calc.stale{background:#3a9de8;color:#fff;letter-spacing:0.05em}
+  .calc.hide{display:none}
+  .hint{font-size:10px;color:#5a5a5a;text-align:center;margin-top:6px;letter-spacing:0.02em}
+  .subrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+  .subrow .hint{margin-top:0;text-align:left;flex:1}
+  .clearbtn{background:none;border:1px solid #3a3a3a;color:#999;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:8px;flex:none}
+  .clearbtn:active{background:#1a1a1a}
+  #out{transition:opacity .12s}
+  #out.stale{opacity:.32}
+  .result{margin:10px 14px 0;border-radius:12px;overflow:hidden;border:1px solid #2a2a2a}
+  .verdict{padding:11px 14px}
+  .verdict .big{font-size:23px;font-weight:800;letter-spacing:0.03em}
+  .verdict .sub{font-size:12px;font-weight:600;margin-top:3px;color:#bbb}
+  .verdict.time{background:#1c1800}
+  .verdict.time .big{color:#ffb300}
+  .verdict.laps{background:#0a1a24}
+  .verdict.laps .big{color:#3a9de8}
+  .kv{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid #1e1e1e;background:#141414}
+  .kv .k{color:#888;text-transform:uppercase;letter-spacing:0.08em;font-size:10px;font-weight:700}
+  .kv .v{font-family:'SF Mono','Courier New',monospace;font-size:15px;text-align:right}
+  .kv .v b{color:#ffb300}
+  .warn{padding:9px 14px;font-size:12px;color:#e85c3a;background:#141414;border-top:1px solid #1e1e1e}
+  .mgn{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 14px;font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase}
+  .mgn span:last-child{font-family:'SF Mono','Courier New',monospace;font-weight:700;letter-spacing:0;text-transform:none}
+  .mgn-ok{background:#0d1a0d;color:#7bbf7b}
+  .mgn-orange{background:#3a2600;color:#ffbf4d}
+  .mgn-dorange{background:#4a2100;color:#ff9330}
+  .mgn-red{background:#3a0d0d;color:#ff5c5c}
+  .mgn-flash{background:#3a0d0d;color:#ff5c5c;animation:mgnflash .7s steps(1,end) infinite}
+  @keyframes mgnflash{50%{background:#ff2b2b;color:#fff}}
+  .section-label{padding:10px 14px 4px;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#c9a84c}
+  table{width:100%;border-collapse:collapse}
+  tr{border-bottom:1px solid #1a1a1a}
+  th{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#666;text-align:left;padding:5px 14px;font-weight:700}
+  td{padding:9px 14px;font-family:'SF Mono','Courier New',monospace;font-size:15px}
+  /* 3-col (laps): Lap | Clock left | Signal */
+  table.t3 th:nth-child(2){text-align:right}
+  table.t3 td:first-child{width:20%}
+  table.t3 td:nth-child(2){text-align:right;width:32%;color:#ccc}
+  table.t3 td:nth-child(3){font-family:-apple-system,Arial,sans-serif;font-size:12px;font-weight:600;color:#888}
+  /* 2-col (timed): Clock left | Signal */
+  table.t2 td:first-child{width:36%;color:#ccc}
+  table.t2 td:nth-child(2){font-family:-apple-system,Arial,sans-serif;font-size:12px;font-weight:600;color:#888}
+  /* override: Lap | Elapsed */
+  table.tov td:first-child{width:26%;font-family:-apple-system,Arial,sans-serif;font-size:12px;font-weight:600;color:#888}
+  table.tov td:nth-child(2){font-size:18px;color:#fff}
+  table.tov2 td{font-size:17px;width:50%}
+  table.tov2 td:first-child{color:#777}
+  table.tov2 td:nth-child(2){color:#fff}
+  table.tov2 tr.r-pass{background:#1c1800}
+  table.tov2 tr.r-pass td:nth-child(2){color:#ffb300;font-weight:700}
+  .r-board td{color:#ffb300}
+  .r-board.islaps td{color:#ddd}
+  .r-flag{background:#0a1f0a}
+  .r-flag td{color:#00c853}
+  .checker-bottom{height:8px;background-image:repeating-conic-gradient(#fff 0% 25%,#000 0% 50%);background-size:8px 8px;margin-top:auto;opacity:0.3}
+</style>
+<meta name="apple-mobile-web-app-title" content="BTCC Startline">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="stylesheet" href="nav.css">
+</head>
+<body data-tool="support">
+<div class="checker"></div>
+
+<div class="pad">
+  <div class="seg" id="seg">
+    <button data-type="time" class="on">Timed</button>
+    <button data-type="laps">Laps</button>
+    <button data-type="override">Override</button>
+  </div>
+  <div class="inputs">
+    <div class="input-card" id="tremCard">
+      <div class="input-label">Time Remaining</div>
+      <div class="row"><input id="trm" type="text" inputmode="numeric" value="11"><span class="sep">:</span><input id="trs" type="text" inputmode="numeric" value="13"></div>
+    </div>
+    <div class="input-card">
+      <div class="input-label">Lap Time (est.)</div>
+      <div class="row"><input id="ltm" type="text" inputmode="numeric" value="01"><span class="sep">:</span><input id="lts" type="text" inputmode="numeric" value="32"></div>
+    </div>
+    <div class="input-card hide" id="passCard">
+      <div class="input-label">Time passed at</div>
+      <div class="row"><input id="pam" type="text" inputmode="numeric" value="01"><span class="sep">:</span><input id="pas" type="text" inputmode="numeric" value="30"></div>
+    </div>
+    <div class="input-card hide" id="lapCard">
+      <div class="input-label">Lap Just Completed</div>
+      <div class="row"><input id="lap" type="text" inputmode="numeric" value="4"></div>
+    </div>
+    <div class="input-card hide" id="maxCard">
+      <div class="input-label">Maximum Laps</div>
+      <div class="row"><input id="max" type="text" inputmode="numeric" value="34"></div>
+    </div>
+  </div>
+  <button class="calc hide" id="calc">Calculate</button>
+  <div class="subrow">
+    <span class="hint">Drag a field up / down to adjust &nbsp;·&nbsp; tap to type</span>
+    <button class="clearbtn" id="clr">Clear</button>
+  </div>
+</div>
+
+<div id="out"></div>
+
+<div class="checker-bottom"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let raceType = 'time';
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const isLive = () => raceType !== 'laps';   // only laps races wait for Calculate; timed + override are live
+
+// Each field: drag up/down to scrub, wheel to nudge, or tap and type.
+// Move/end are tracked on `document` so the drag keeps working once the
+// finger leaves the small input box.
+function scrubbable(id, min, max, pad){
+  const input = $(id);
+  const cl = v => clamp(v, min, max);
+  const fmt = v => pad ? String(v).padStart(2, '0') : String(v);
+  let startY = 0, startVal = 0, active = false, moved = false, killClick = false;
+
+  const apply = v => {
+    const s = fmt(cl(v));
+    if (s === input.value) return;
+    input.value = s;
+    onChange();
+  };
+  const move = clientY => {
+    const dy = startY - clientY;
+    if (!moved) {
+      if (Math.abs(dy) < 6) return;
+      moved = true;
+      if (document.activeElement === input) input.blur();
+    }
+    apply(startVal + Math.round(dy / 7));
+  };
+  const tMove = e => { if (active) { e.preventDefault(); move(e.touches[0].clientY); } };
+  const mMove = e => { if (active) move(e.clientY); };
+  const end = () => {
+    if (!active) return;
+    active = false;
+    if (moved) { killClick = true; setTimeout(() => killClick = false, 400); }
+    document.removeEventListener('touchmove', tMove, { passive: false });
+    document.removeEventListener('touchend', end);
+    document.removeEventListener('touchcancel', end);
+    document.removeEventListener('mousemove', mMove);
+    document.removeEventListener('mouseup', end);
+  };
+
+  input.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+    startVal = cl(parseInt(input.value) || 0);
+    active = true; moved = false;
+    document.addEventListener('touchmove', tMove, { passive: false });
+    document.addEventListener('touchend', end);
+    document.addEventListener('touchcancel', end);
+  }, { passive: true });
+  input.addEventListener('mousedown', e => {
+    startY = e.clientY;
+    startVal = cl(parseInt(input.value) || 0);
+    active = true; moved = false;
+    document.addEventListener('mousemove', mMove);
+    document.addEventListener('mouseup', end);
+  });
+  input.addEventListener('click', e => { if (killClick) { e.preventDefault(); e.stopPropagation(); killClick = false; } });
+
+  input.addEventListener('wheel', e => {
+    e.preventDefault();
+    apply((parseInt(input.value) || 0) + (e.deltaY < 0 ? 1 : -1));
+  }, { passive: false });
+
+  input.addEventListener('input', () => {
+    const cleaned = input.value.replace(/[^0-9]/g, '').slice(0, pad ? 2 : 3);
+    if (cleaned !== input.value) input.value = cleaned;
+    onChange();
+  });
+  input.addEventListener('blur', () => { input.value = fmt(cl(parseInt(input.value) || 0)); });
+}
+scrubbable('trm', 0, 59, true);
+scrubbable('trs', 0, 59, true);
+scrubbable('ltm', 0, 20, true);
+scrubbable('lts', 0, 59, true);
+scrubbable('pam', 0, 59, true);
+scrubbable('pas', 0, 59, true);
+scrubbable('lap', 1, 199, false);
+scrubbable('max', 1, 199, false);
+
+function onChange(){
+  if (isLive()) render();
+  else markStale();
+}
+function markStale(){
+  $('out').classList.add('stale');
+  const b = $('calc');
+  b.classList.add('stale');
+  b.textContent = 'Calculate — inputs changed';
+}
+function calcNow(){
+  render();
+  $('out').classList.remove('stale');
+  const b = $('calc');
+  b.classList.remove('stale');
+  b.textContent = 'Calculate';
+}
+$('calc').addEventListener('click', calcNow);
+
+$('seg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  raceType = b.dataset.type;
+  [...$('seg').children].forEach(x => x.classList.toggle('on', x === b));
+  const laps = raceType === 'laps';
+  const override = raceType === 'override';
+  $('tremCard').classList.toggle('hide', override);
+  $('passCard').classList.toggle('hide', !override);
+  $('lapCard').classList.toggle('hide', !laps);
+  $('maxCard').classList.toggle('hide', !laps);
+  $('calc').classList.toggle('hide', !laps);
+  calcNow();   // always show a fresh result straight after switching
+});
+
+$('clr').addEventListener('click', () => {
+  ['trm','trs','ltm','lts','pam','pas','lap','max'].forEach(id => $(id).value = '');
+  calcNow();
+});
+
+function mmss(t){ t = Math.max(0, Math.round(t)); return Math.floor(t/60) + ':' + String(t%60).padStart(2,'0'); }
+function iv(id){ const v = parseInt($(id).value); return isNaN(v) ? 0 : v; }
+function warn(msg){ return '<div class="warn" style="margin:10px 14px 0;border:1px solid #2a2a2a;border-radius:12px">' + msg + '</div>'; }
+
+// How close is it to gaining / losing a lap?  boardClock = clock left as the leader starts the last lap.
+// down = seconds of drift until a lap is lost / the race goes to time;
+// up   = seconds until an extra lap is added (only when the finish is on time).
+function marginBanner(boardClock, lapTime, timedFinish){
+  const down = Math.max(0, boardClock);
+  const up   = timedFinish ? Math.max(0, lapTime - boardClock) : Infinity;
+  const m = Math.min(down, up);
+  let cls, label;
+  if (m <= 4)       { cls = 'mgn-flash';   label = 'KNIFE EDGE'; }
+  else if (m <= 6)  { cls = 'mgn-red';     label = 'VERY CLOSE'; }
+  else if (m <= 8)  { cls = 'mgn-dorange'; label = 'CLOSE'; }
+  else if (m <= 10) { cls = 'mgn-orange';  label = 'CLOSE'; }
+  else              { cls = 'mgn-ok';      label = 'COMFORTABLE'; }
+  const n = Math.round(m);
+  const detail = cls === 'mgn-ok'
+    ? (m > 90 ? mmss(m) : n + 's') + ' in hand'
+    : n + ' second' + (n === 1 ? '' : 's') + ' margin';
+  return '<div class="mgn ' + cls + '"><span>' + label + '</span><span>' + detail + '</span></div>';
+}
+
+function render(){
+  if (raceType === 'override') return renderOverride();
+  return raceType === 'time' ? renderTimed() : renderLaps();
+}
+
+// ---- Override: late safety car. Enter lap time + the time the leader passed the line;
+//      it fills in every control-line crossing against the whole-lap grid. ----
+function renderOverride(){
+  const out = $('out');
+  const lapTime = iv('ltm')*60 + iv('lts');
+  const passAt  = iv('pam')*60 + iv('pas');
+  if (lapTime <= 0) { out.innerHTML = warn('Enter a lap time.'); return; }
+
+  const offset = passAt % lapTime;   // where in the lap cycle the leader crosses
+
+  const rows = [];
+  for (let k = 0; k <= 5; k++) rows.push({ t: k * lapTime, leader: offset === 0 });
+  if (offset > 0) {
+    for (let k = 0; k <= 5; k++) rows.push({ t: offset + k * lapTime, leader: true });
+  }
+  rows.sort((a, b) => a.t - b.t);
+
+  let h = '<div class="result"><div class="verdict laps">';
+  h += '<div class="big">OVERRIDE</div>';
+  h += '<div class="sub">Leader passed at ' + mmss(passAt) + ' — every control-line crossing</div></div>';
+  h += '<div class="kv"><span class="k">Seconds after 0:00</span><span class="v"><b>' + passAt + 's</b></span></div>';
+  h += '</div>';
+  h += '<div class="section-label">Crossings</div>';
+  h += '<table class="tov2"><tr><th>Grid</th><th>Leader passes</th></tr>';
+  rows.forEach(r => {
+    const cell = mmss(r.t);
+    h += '<tr class="' + (r.leader ? 'r-pass' : '') + '"><td>' + (r.leader ? '' : cell) + '</td><td>' + (r.leader ? cell : '') + '</td></tr>';
+  });
+  h += '</table>';
+  out.innerHTML = h;
+}
+
+// ---- Timed race: no lap numbers, live ----
+function renderTimed(){
+  const out = $('out');
+  const timeRem = iv('trm')*60 + iv('trs');
+  const lapTime = iv('ltm')*60 + iv('lts');
+
+  if (lapTime <= 0) { out.innerHTML = warn('Enter a lap time.'); return; }
+
+  const extra = Math.ceil(timeRem / lapTime);   // full laps still to run (the one after 0:00 included)
+  if (extra < 1) { out.innerHTML = warn('Clock has expired — flag the leader now.'); return; }
+
+  const boardClock = timeRem - (extra - 1) * lapTime;   // clock reading as the leader crosses to start the last lap
+  const pastZero   = extra * lapTime - timeRem;
+
+  let h = '<div class="result">';
+  h += marginBanner(boardClock, lapTime, true);
+  h += '<div class="verdict time"><div class="big">TIMED RACE</div><div class="sub">Last lap board: <b>REQUIRED</b></div></div>';
+  h += '<div class="kv"><span class="k">Laps remaining</span><span class="v">~' + extra + '</span></div>';
+  h += '<div class="kv"><span class="k">Show board at</span><span class="v"><b>' + mmss(boardClock) + '</b> on the clock</span></div>';
+  if (pastZero > 0) {
+    h += '<div class="kv"><span class="k">Leader flagged</span><span class="v">+' + mmss(pastZero) + ' after 0:00</span></div>';
+  }
+  h += '</div>';
+
+  const firstK = Math.max(0, extra - 4);   // last 5 crossings
+  h += '<div class="section-label">Final laps</div>';
+  h += '<table class="t2"><tr><th>Clock left</th><th>Signal</th></tr>';
+  for (let k = firstK; k <= extra; k++) {
+    const isFlag = k === extra, isBoard = k === extra - 1;
+    const cls = isFlag ? 'r-flag' : (isBoard ? 'r-board' : '');
+    const clock = isFlag ? '—' : mmss(timeRem - k * lapTime);
+    let sig = isFlag ? 'Chequered Flag' : (isBoard ? 'Last Lap Board' : '');
+    if (isFlag && pastZero > 0) sig += '  (+' + mmss(pastZero) + ')';
+    h += '<tr class="' + cls + '"><td>' + clock + '</td><td>' + sig + '</td></tr>';
+  }
+  h += '</table>';
+
+  out.innerHTML = h;
+}
+
+// ---- Laps race: lap cap + clock, gated by Calculate ----
+function renderLaps(){
+  const out = $('out');
+  const timeRem  = iv('trm')*60 + iv('trs');
+  const lapTime  = iv('ltm')*60 + iv('lts');
+  const startLap = iv('lap');
+  const maxLaps  = iv('max');
+
+  if (lapTime <= 0 || startLap < 1 || maxLaps < 1) {
+    out.innerHTML = warn('Enter a lap time, the current lap, and the maximum laps.');
+    return;
+  }
+
+  const extra    = Math.ceil(timeRem / lapTime);
+  const projFlag = startLap + extra;
+  const isLaps   = maxLaps <= projFlag;            // equal => laps
+  const boardReq = maxLaps >  projFlag;            // clock beats the cap => still a timed finish
+  const flagLap  = Math.min(maxLaps, projFlag);
+  const boardLap = flagLap - 1;
+  const clockAt  = lap => Math.max(timeRem - (lap - startLap) * lapTime, 0);
+  const pastZero = (flagLap - startLap) * lapTime - timeRem;
+
+  let h = '<div class="result">';
+  if (boardLap >= startLap) h += marginBanner(clockAt(boardLap), lapTime, boardReq);
+  h += '<div class="verdict ' + (isLaps ? 'laps' : 'time') + '">';
+  h += '<div class="big">' + (isLaps ? 'LAPPED RACE' : 'TIMED RACE') + '</div>';
+  if (!isLaps) h += '<div class="sub">Last lap board: <b>REQUIRED</b></div>';
+  h += '</div>';
+  h += '<div class="kv"><span class="k">Chequered flag</span><span class="v">Lap ' + flagLap + '</span></div>';
+  if (boardLap >= startLap) {
+    h += '<div class="kv"><span class="k">' + (boardReq ? 'Board out on' : 'Last lap') + '</span>' +
+         '<span class="v">Lap ' + boardLap + (boardReq ? '  ·  <b>' + mmss(clockAt(boardLap)) + '</b> left' : '') + '</span></div>';
+  } else {
+    h += '<div class="warn">Final lap already underway — the board should already be shown.</div>';
+  }
+  if (!isLaps && pastZero > 0) {
+    h += '<div class="kv"><span class="k">Leader flagged</span><span class="v">+' + mmss(pastZero) + ' after 0:00</span></div>';
+  }
+  h += '</div>';
+
+  const firstRow = Math.max(startLap, flagLap - 4);   // last 5 laps
+  h += '<div class="section-label">Final laps</div>';
+  h += '<table class="t3"><tr><th>Lap</th><th>Clock left</th><th>Signal</th></tr>';
+  for (let lap = firstRow; lap <= flagLap; lap++) {
+    const isFlag = lap === flagLap, isBoard = lap === boardLap;
+    const cls = isFlag ? 'r-flag' : (isBoard ? 'r-board' + (isLaps ? ' islaps' : '') : '');
+    const clock = (!isLaps && isFlag) ? '—' : mmss(clockAt(lap));
+    let sig = isFlag ? 'Chequered Flag' : (isBoard ? (boardReq ? 'Last Lap Board' : 'Last Lap') : '');
+    if (isFlag && !isLaps && pastZero > 0) sig += '  (+' + mmss(pastZero) + ')';
+    h += '<tr class="' + cls + '"><td>' + lap + '</td><td>' + clock + '</td><td>' + sig + '</td></tr>';
+  }
+  h += '</table>';
+
+  out.innerHTML = h;
+}
+
+render();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

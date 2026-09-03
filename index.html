@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#0a0a0a">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="BTCC Startline">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<title>BTCC Startline</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:#0a0a0a}
+  body{color:#f0f0f0;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;min-height:100vh;min-height:-webkit-fill-available;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  .wrap{padding:16px 16px 32px}
+  h1{text-align:center;font-size:19px;font-weight:700;padding:8px 0 14px;letter-spacing:0.02em}
+  .logos{display:flex;align-items:center;justify-content:center;gap:22px;background:#f7f7f7;border-radius:14px;padding:16px 22px}
+  .logos img{display:block}
+  .logos .barc{height:70px}
+  .logos .btcc{height:44px}
+  .logos .divider{width:1px;height:52px;background:rgba(0,0,0,0.12)}
+  .section-label{font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin:22px 4px 8px}
+  .list{background:#141414;border:1px solid #262626;border-radius:12px;overflow:hidden}
+  a.tool{display:flex;align-items:center;gap:14px;padding:16px 14px;text-decoration:none;color:#fff;border-bottom:1px solid #1f1f1f}
+  a.tool:last-child{border-bottom:none}
+  a.tool .ic{font-size:20px;width:26px;text-align:center}
+  a.tool .name{flex:1;font-size:17px;font-weight:600}
+  a.tool .chev{color:#666;font-size:15px}
+  .tool.green .ic{filter:none}
+  .foot{text-align:center;color:#555;font-size:11px;margin-top:20px;letter-spacing:0.03em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>BTCC</h1>
+  <div class="logos">
+    <img class="barc" src="img/barc.png" alt="BARC">
+    <div class="divider"></div>
+    <img class="btcc" src="img/btcc.png" alt="BTCC">
+  </div>
+
+  <div class="section-label">Tools</div>
+  <div class="list">
+    <a class="tool green" href="countdown.html"><span class="ic">&#x1F6A9;</span><span class="name">Race Start Countdown</span><span class="chev">&rsaquo;</span></a>
+    <a class="tool" href="adverse.html"><span class="ic">&#x1F327;</span><span class="name">Adverse Weather</span><span class="chev">&rsaquo;</span></a>
+    <a class="tool" href="support.html"><span class="ic">&#x23F1;</span><span class="name">Support Race Timing</span><span class="chev">&rsaquo;</span></a>
+    <a class="tool" href="photo.html"><span class="ic">&#x1F4F7;</span><span class="name">Send Photo to Clerk</span><span class="chev">&rsaquo;</span></a>
+  </div>
+
+  <div class="foot">BTCC Startline &middot; add to Home Screen to use offline</div>
+</div>
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+</script>
+</body>
+</html>

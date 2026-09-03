@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#0a0a0a">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="BTCC Startline">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="stylesheet" href="nav.css">
+<title>Send Photo to Clerk</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:#0a0a0a}
+  body{color:#f0f0f0;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;min-height:100vh;min-height:-webkit-fill-available;display:flex;flex-direction:column}
+  .form{flex:1;padding:14px 16px 24px}
+  .lbl{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#c9a84c;margin:18px 2px 7px}
+  .lbl:first-child{margin-top:4px}
+  .card{background:#161616;border:1px solid #2a2a2a;border-radius:11px;padding:4px 12px}
+  .fieldrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 2px;border-bottom:1px solid #232323}
+  .fieldrow:last-child{border-bottom:none}
+  .fieldrow > span{font-size:15px;color:#fff}
+  select,input[type=text],input[type=number],input[type=time]{background:transparent;border:none;outline:none;color:#fff;font-family:inherit;font-size:16px;text-align:right;-webkit-appearance:none;appearance:none;color-scheme:dark;max-width:62%}
+  select{text-align-last:right}
+  input::placeholder{color:#666}
+  .full{width:100%;text-align:left;max-width:100%;padding:11px 2px;font-size:16px}
+  .switch{position:relative;width:46px;height:28px;flex:none}
+  .switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0}
+  .switch .track{position:absolute;inset:0;background:#3a3a3a;border-radius:14px;transition:background .15s}
+  .switch .knob{position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:left .15s}
+  .switch input:checked + .track{background:#00c853}
+  .switch input:checked + .track + .knob{left:21px}
+  .btn{display:block;width:100%;margin-top:22px;background:#c9a84c;color:#0a0a0a;border:none;border-radius:12px;padding:15px 0;font-family:inherit;font-size:16px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase}
+  .btn:disabled{background:#242424;color:#666}
+  .btn:active:not(:disabled){opacity:.85}
+  .hint{font-size:11px;color:#666;text-align:center;margin-top:10px;line-height:1.5}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;padding:10px 2px}
+  .thumb{position:relative;width:74px;height:74px;border-radius:8px;overflow:hidden;background:#000}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .thumb button{position:absolute;top:2px;right:2px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:12px;line-height:20px;padding:0}
+  .addphoto{display:block;width:100%;text-align:left;background:#161616;border:1px solid #2a2a2a;border-radius:11px;color:#3a9de8;font-family:inherit;font-size:15px;font-weight:600;padding:13px 12px}
+</style>
+</head>
+<body data-tool="photo">
+<div class="form">
+
+  <div class="lbl">Send report to</div>
+  <div class="card">
+    <label class="fieldrow"><span>Ops Clerk</span>
+      <select id="clerk">
+        <option value="jmendelsohn.barc@gmail.com">Josh Mendelsohn</option>
+        <option value="ksalmons.barc@gmail.com">Kieron Salmons</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="lbl">Photos</div>
+  <div id="thumbs" class="thumbs" hidden></div>
+  <label class="addphoto">＋ Upload photos from library
+    <input id="files" type="file" accept="image/*" multiple hidden>
+  </label>
+
+  <div class="lbl">Details</div>
+  <div class="card">
+    <label class="fieldrow"><span>Report type</span>
+      <select id="rtype">
+        <option>Out of position start</option>
+        <option>Other</option>
+      </select>
+    </label>
+    <input id="rtypeOther" class="full" type="text" placeholder="Describe report type" hidden>
+    <label class="fieldrow"><span>Championship</span>
+      <select id="champ">
+        <option>BTCC</option>
+        <option>Porsche Sprint Challenge</option>
+        <option>Porsche Carrera Cup</option>
+        <option>F4</option>
+        <option>Mini Challenge</option>
+        <option>Mini Challenge Trophy</option>
+        <option>Caterham</option>
+        <option>Guest</option>
+      </select>
+    </label>
+    <input id="champOther" class="full" type="text" placeholder="Championship name" hidden>
+    <label class="fieldrow"><span>Session</span>
+      <select id="session"></select>
+    </label>
+    <label class="fieldrow"><span>Car number</span>
+      <input id="car" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="—">
+    </label>
+    <label class="fieldrow"><span>More than one car</span>
+      <span class="switch"><input id="multi" type="checkbox"><span class="track"></span><span class="knob"></span></span>
+    </label>
+    <input id="otherCars" class="full" type="text" inputmode="numeric" placeholder="Other car number(s), e.g. 17 5 23" hidden>
+    <label class="fieldrow"><span>Time of incident</span>
+      <input id="time" type="time">
+    </label>
+    <label class="fieldrow"><span>Written report to follow</span>
+      <span class="switch"><input id="written" type="checkbox"><span class="track"></span><span class="knob"></span></span>
+    </label>
+  </div>
+
+  <button id="go" class="btn" disabled>Finalise report</button>
+  <div class="hint" id="hint"></div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let photos = [];   // {name, dataURL, file}
+
+// remember last clerk
+try { const c = localStorage.getItem('opsClerk'); if (c) $('clerk').value = c; } catch(e){}
+$('clerk').addEventListener('change', () => { try { localStorage.setItem('opsClerk', $('clerk').value); } catch(e){} });
+
+// sessions depend on championship
+function fillSessions(){
+  const btcc = $('champ').value === 'BTCC';
+  const list = btcc
+    ? ['Practice','Qualifying','Qualifying Race','Race 1','Race 2','Race 3']
+    : ['Practice','Qualifying','Race 1','Race 2','Race 3'];
+  const cur = $('session').value;
+  $('session').innerHTML = list.map(s => '<option>' + s + '</option>').join('');
+  $('session').value = list.includes(cur) ? cur : 'Race 1';
+}
+$('champ').addEventListener('change', () => {
+  $('champOther').hidden = $('champ').value !== 'Guest';
+  fillSessions(); update();
+});
+$('rtype').addEventListener('change', () => { $('rtypeOther').hidden = $('rtype').value !== 'Other'; update(); });
+$('multi').addEventListener('change', () => { $('otherCars').hidden = !$('multi').checked; update(); });
+['rtypeOther','champOther','session','car','otherCars','time','written'].forEach(id => $(id).addEventListener('input', update));
+
+// default time = now
+(function(){ const d = new Date(); $('time').value = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); })();
+fillSessions();
+
+// photos
+$('files').addEventListener('change', e => {
+  const list = [...e.target.files];
+  let pending = list.length;
+  if (!pending) return;
+  list.forEach(file => {
+    const r = new FileReader();
+    r.onload = () => { photos.push({ name: file.name, dataURL: r.result, file }); if (--pending === 0) renderThumbs(); };
+    r.readAsDataURL(file);
+  });
+  e.target.value = '';
+});
+function renderThumbs(){
+  const box = $('thumbs');
+  box.hidden = photos.length === 0;
+  box.innerHTML = photos.map((p, i) =>
+    '<div class="thumb"><img src="' + p.dataURL + '"><button data-i="' + i + '">✕</button></div>').join('');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    photos.splice(+b.dataset.i, 1); renderThumbs(); update();
+  }));
+  update();
+}
+
+function champLabel(){ return $('champ').value === 'Guest' ? $('champOther').value.trim() : $('champ').value; }
+function rtypeLabel(){ return $('rtype').value === 'Other' ? $('rtypeOther').value.trim() : $('rtype').value; }
+function carList(){
+  const main = $('car').value.trim();
+  let list = main ? [main] : [];
+  if ($('multi').checked) list = list.concat(($('otherCars').value.match(/\d+/g)) || []);
+  return list;
+}
+function subject(){
+  const cars = carList().length ? 'Car ' + carList().join(' / ') : 'Car';
+  return champLabel() + ' - ' + $('session').value + ' - ' + cars + ' - ' + rtypeLabel();
+}
+function bodyText(){
+  const lines = ['Report type: ' + rtypeLabel(), 'Time of incident: ' + ($('time').value || '')];
+  if ($('written').checked) { lines.unshift(''); lines.unshift('Written report to follow.'); }
+  return lines.join('\n');
+}
+function canGo(){
+  return photos.length > 0
+    && $('car').value.trim() !== ''
+    && ($('champ').value !== 'Guest' || $('champOther').value.trim() !== '')
+    && ($('rtype').value !== 'Other' || $('rtypeOther').value.trim() !== '');
+}
+function update(){ $('go').disabled = !canGo(); }
+
+$('go').addEventListener('click', async () => {
+  const to = $('clerk').value;
+  const subj = subject();
+  const body = bodyText();
+  const files = photos.map(p => p.file).filter(Boolean);
+
+  const shareData = { title: subj, text: 'To: ' + to + '\n\n' + subj + '\n\n' + body, files };
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try { await navigator.share(shareData); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  // fallback: open mail with details (no attachment), tell the user to attach
+  const href = 'mailto:' + encodeURIComponent(to) +
+               '?subject=' + encodeURIComponent(subj) +
+               '&body=' + encodeURIComponent(body + '\n\n[Attach the photo(s) from your library.]');
+  location.href = href;
+  $('hint').textContent = 'Your share sheet is unavailable, so Mail opened without the photos — attach them from your library before sending.';
+});
+
+update();
+</script>
+</body>
+</html>
