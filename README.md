@@ -1,42 +1,43 @@
 # BTCC Startline — web app (PWA)
 
-Everything in this `web/` folder is the shareable version of the app. It runs in any
-modern phone browser, installs to the home screen, and works fully offline once opened.
+Installable web app for BTCC marshals: race-start countdowns, support-race timing,
+and an incident-photo report tool.
 
-## Deploy it (pick one)
+## Live site
 
-**Fastest — Netlify Drop (a link in 2 minutes, no account needed to start)**
-1. Go to https://app.netlify.com/drop
-2. Drag this whole `web` folder onto the page.
-3. You get a URL like `https://cheerful-otter-123.netlify.app`. Share that.
-4. To update later: run `./sync.sh` (see below), then drag the folder on again
-   (or sign in / link a site so drops replace the same URL).
+**https://stalwart-pasca-9864aa.netlify.app/** — hosted on Netlify, auto-deploys
+from this repo (`btcc-startline`, branch `main`) on every push. Share this link.
 
-**Longer term — GitHub Pages (free, versioned)**
-1. Put the contents of `web/` in a repo (or a `/docs` folder of one).
-2. Repo → Settings → Pages → deploy from that branch/folder.
-3. URL: `https://<you>.github.io/<repo>/`. Update by pushing.
-
-Any host works as long as it serves over **HTTPS** — required for offline mode,
-the camera, and the share sheet. Netlify / GitHub Pages / Cloudflare Pages all do
-HTTPS automatically.
+(An older copy at `jmendelsohn2.github.io/btcc-startline/` has no send function —
+don't use that one.)
 
 ## Install on a phone
 
-- **iPhone:** open the URL in **Safari** → Share → *Add to Home Screen*.
-- **Android:** open in Chrome → it offers *Install* (or menu → *Add to Home screen*).
+- **iPhone:** open the link in **Safari** → Share → *Add to Home Screen*.
+- **Android:** open in Chrome → *Install*.
 
-After that first open it's cached — the countdown and timing tools then work with
-no signal at all.
+The countdown and timing tools then work fully offline (service worker cache).
 
-## Keeping it in sync with the iOS app
+## Photo report → email
 
-The three timing tools (`countdown.html`, `adverse.html`, `support.html`) are the
-**same files** as the iOS app, which live in `../BTCC countdown/`. After editing any
-of them there, run:
+`photo.html` posts the report + compressed photos to the Netlify function
+`netlify/functions/send.js`, which emails it (photos attached) from
+`btccstartline@gmail.com` to whichever Ops Clerk is selected.
+
+Server config lives in **Netlify → Environment variables**:
+`GMAIL_USER` = btccstartline@gmail.com, `GMAIL_APP_PASSWORD` = a Gmail app password.
+Never put those in the repo.
+
+If reports land in a clerk's Spam: in that Gmail, Settings → Filters →
+create a filter from `btccstartline@gmail.com` → "Never send it to Spam".
+
+## Keeping in sync with the iOS app
+
+`countdown.html`, `adverse.html`, `support.html` are the **same files** as the iOS
+app (in `../BTCC countdown/`). After editing one there, run:
 
     ./sync.sh
 
-That copies them in, re-adds the web shell, and bumps the offline-cache version so
-installed phones pick up the change on next open. `index.html`, `photo.html`,
-`nav.*` and `sw.js` are web-only — edit them here directly.
+then `git commit && git push`. It copies them in, re-adds the web shell, and bumps
+the offline-cache version. `index.html`, `photo.html`, `nav.*`, `sw.js` and the
+function are web-only — edit them here.
