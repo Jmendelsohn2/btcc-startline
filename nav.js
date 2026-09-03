@@ -5,7 +5,7 @@
 (function () {
   var TOOLS = [
     { id: 'index',     file: 'index.html',     label: 'Home',      icon: '\u{1F3E0}' },
-    { id: 'countdown', file: 'countdown.html', label: 'Countdown', icon: '\u{1F6A9}', green: true },
+    { id: 'countdown', file: 'countdown.html', label: 'Countdown', icon: '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-2px"><path d="M7 2.5v19" stroke="#8a8a8a" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M7 3.2h11l-2.6 3.9L18 11H7z" fill="#00c853"/></svg>', green: true },
     { id: 'adverse',   file: 'adverse.html',   label: 'Adverse',   icon: '\u{1F327}' },
     { id: 'support',   file: 'support.html',   label: 'Support',   icon: '⏱' },
     { id: 'photo',     file: 'photo.html',     label: 'Photo',     icon: '\u{1F4F7}' }
