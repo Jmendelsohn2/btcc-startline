@@ -1,0 +1,8 @@
+{
+  "name": "btcc-startline",
+  "private": true,
+  "description": "BTCC Startline web app + incident-report send function",
+  "dependencies": {
+    "nodemailer": "^6.10.1"
+  }
+}

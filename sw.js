@@ -1,5 +1,5 @@
 /* Offline cache. Bump CACHE on every deploy so clients pick up changes. */
-const CACHE = 'btcc-startline-v2';
+const CACHE = 'btcc-startline-v3';
 
 const ASSETS = [
   'index.html',

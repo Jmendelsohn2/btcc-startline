@@ -35,6 +35,13 @@
   .btn{display:block;width:100%;margin-top:22px;background:#c9a84c;color:#0a0a0a;border:none;border-radius:12px;padding:15px 0;font-family:inherit;font-size:16px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase}
   .btn:disabled{background:#242424;color:#666}
   .btn:active:not(:disabled){opacity:.85}
+  .status{margin-top:12px;padding:11px 14px;border-radius:10px;font-size:13px;font-weight:600;line-height:1.5;display:none}
+  .status.show{display:block}
+  .status.sending{background:#12233a;color:#5aa9e6}
+  .status.ok{background:#0d1f0d;color:#4fd06a}
+  .status.warn{background:#3a2600;color:#ffbf4d}
+  .status.fail{background:#3a0d0d;color:#ff6b6b}
+  .again{display:block;text-align:center;margin-top:14px;color:#3a9de8;font-size:14px;font-weight:600;text-decoration:none}
   .hint{font-size:11px;color:#666;text-align:center;margin-top:10px;line-height:1.5}
   .thumbs{display:flex;gap:8px;flex-wrap:wrap;padding:10px 2px}
   .thumb{position:relative;width:74px;height:74px;border-radius:8px;overflow:hidden;background:#000}
@@ -54,11 +61,12 @@
         <option value="ksalmons.barc@gmail.com">Kieron Salmons</option>
       </select>
     </label>
+    <input id="marshal" class="full" type="text" placeholder="Your name / post number" autocomplete="off">
   </div>
 
   <div class="lbl">Photos</div>
   <div id="thumbs" class="thumbs" hidden></div>
-  <label class="addphoto">＋ Upload photos from library
+  <label class="addphoto">＋ <span id="addlabel">Upload photos from library</span>
     <input id="files" type="file" accept="image/*" multiple hidden>
   </label>
 
@@ -103,19 +111,25 @@
   </div>
 
   <button id="go" class="btn" disabled>Finalise report</button>
-  <div class="hint" id="hint"></div>
+  <div id="status" class="status"></div>
+  <a id="again" class="again" href="photo.html" hidden>Start another report</a>
+  <div class="hint" id="hint">Sends the email with the photo(s) attached, straight to the clerk.</div>
 </div>
 
 <script src="nav.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-let photos = [];   // {name, dataURL, file}
+const SEND_URL = '/.netlify/functions/send';
+let photos = [];   // compressed data URLs
 
-// remember last clerk
-try { const c = localStorage.getItem('opsClerk'); if (c) $('clerk').value = c; } catch(e){}
-$('clerk').addEventListener('change', () => { try { localStorage.setItem('opsClerk', $('clerk').value); } catch(e){} });
+// remember clerk + marshal per phone
+try {
+  const c = localStorage.getItem('opsClerk'); if (c) $('clerk').value = c;
+  const m = localStorage.getItem('reportingMarshal'); if (m) $('marshal').value = m;
+} catch (e) {}
+$('clerk').addEventListener('change', () => { try { localStorage.setItem('opsClerk', $('clerk').value); } catch (e) {} });
+$('marshal').addEventListener('input', () => { try { localStorage.setItem('reportingMarshal', $('marshal').value.trim()); } catch (e) {} update(); });
 
-// sessions depend on championship
 function fillSessions(){
   const btcc = $('champ').value === 'BTCC';
   const list = btcc
@@ -125,41 +139,49 @@ function fillSessions(){
   $('session').innerHTML = list.map(s => '<option>' + s + '</option>').join('');
   $('session').value = list.includes(cur) ? cur : 'Race 1';
 }
-$('champ').addEventListener('change', () => {
-  $('champOther').hidden = $('champ').value !== 'Guest';
-  fillSessions(); update();
-});
+$('champ').addEventListener('change', () => { $('champOther').hidden = $('champ').value !== 'Guest'; fillSessions(); update(); });
 $('rtype').addEventListener('change', () => { $('rtypeOther').hidden = $('rtype').value !== 'Other'; update(); });
 $('multi').addEventListener('change', () => { $('otherCars').hidden = !$('multi').checked; update(); });
 ['rtypeOther','champOther','session','car','otherCars','time','written'].forEach(id => $(id).addEventListener('input', update));
 
-// default time = now
 (function(){ const d = new Date(); $('time').value = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); })();
 fillSessions();
 
-// photos
-$('files').addEventListener('change', e => {
-  const list = [...e.target.files];
-  let pending = list.length;
-  if (!pending) return;
-  list.forEach(file => {
-    const r = new FileReader();
-    r.onload = () => { photos.push({ name: file.name, dataURL: r.result, file }); if (--pending === 0) renderThumbs(); };
-    r.readAsDataURL(file);
+// ---- photos: compress on the phone before sending ----
+function compress(file, maxDim, quality){
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (Math.max(w, h) > maxDim) { const s = maxDim / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s); }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      try { resolve(c.toDataURL('image/jpeg', quality)); } catch (e) { resolve(null); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
   });
+}
+$('files').addEventListener('change', async e => {
+  const list = [...e.target.files];
+  $('addlabel').textContent = 'Adding photos…';
+  for (const file of list) { const d = await compress(file, 1600, 0.68); if (d) photos.push(d); }
   e.target.value = '';
+  renderThumbs();
 });
 function renderThumbs(){
   const box = $('thumbs');
   box.hidden = photos.length === 0;
-  box.innerHTML = photos.map((p, i) =>
-    '<div class="thumb"><img src="' + p.dataURL + '"><button data-i="' + i + '">✕</button></div>').join('');
-  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-    photos.splice(+b.dataset.i, 1); renderThumbs(); update();
-  }));
+  box.innerHTML = photos.map((d, i) => '<div class="thumb"><img src="' + d + '"><button data-i="' + i + '">✕</button></div>').join('');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { photos.splice(+b.dataset.i, 1); renderThumbs(); }));
+  $('addlabel').textContent = photos.length ? 'Add more photos' : 'Upload photos from library';
   update();
 }
 
+// ---- report text ----
 function champLabel(){ return $('champ').value === 'Guest' ? $('champOther').value.trim() : $('champ').value; }
 function rtypeLabel(){ return $('rtype').value === 'Other' ? $('rtypeOther').value.trim() : $('rtype').value; }
 function carList(){
@@ -168,39 +190,69 @@ function carList(){
   if ($('multi').checked) list = list.concat(($('otherCars').value.match(/\d+/g)) || []);
   return list;
 }
-function subject(){
+function subjectLine(){
   const cars = carList().length ? 'Car ' + carList().join(' / ') : 'Car';
   return champLabel() + ' - ' + $('session').value + ' - ' + cars + ' - ' + rtypeLabel();
 }
-function bodyText(){
-  const lines = ['Report type: ' + rtypeLabel(), 'Time of incident: ' + ($('time').value || '')];
-  if ($('written').checked) { lines.unshift(''); lines.unshift('Written report to follow.'); }
+function bodyLines(){
+  const lines = [
+    'Reported by: ' + $('marshal').value.trim(),
+    'Report type: ' + rtypeLabel(),
+    'Championship: ' + champLabel(),
+    'Session: ' + $('session').value,
+    'Car(s): ' + (carList().join(' / ') || '—'),
+    'Time of incident: ' + ($('time').value || '—')
+  ];
+  if ($('written').checked) lines.push('', 'Written report to follow.');
   return lines.join('\n');
 }
 function canGo(){
   return photos.length > 0
+    && $('marshal').value.trim() !== ''
     && $('car').value.trim() !== ''
     && ($('champ').value !== 'Guest' || $('champOther').value.trim() !== '')
     && ($('rtype').value !== 'Other' || $('rtypeOther').value.trim() !== '');
 }
-function update(){ $('go').disabled = !canGo(); }
+function update(){ if (!sending) $('go').disabled = !canGo(); }
 
+function setStatus(kind, msg){
+  const s = $('status');
+  s.className = 'status show ' + kind;
+  s.textContent = msg;
+}
+
+let sending = false;
 $('go').addEventListener('click', async () => {
-  const to = $('clerk').value;
-  const subj = subject();
-  const body = bodyText();
-  const files = photos.map(p => p.file).filter(Boolean);
+  if (!canGo() || sending) return;
+  sending = true;
+  $('go').disabled = true;
+  $('again').hidden = true;
+  setStatus('sending', 'Sending…');
 
-  const shareData = { title: subj, text: 'To: ' + to + '\n\n' + subj + '\n\n' + body, files };
-  if (navigator.canShare && navigator.canShare({ files })) {
-    try { await navigator.share(shareData); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  const payload = { to: $('clerk').value, subject: subjectLine(), text: bodyLines(), photos: photos };
+
+  try {
+    const res = await fetch(SEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    let out = {};
+    try { out = await res.json(); } catch (e) {}
+    if (res.ok && out.ok) {
+      setStatus('ok', 'Sent ✓  The clerk has it.');
+      $('go').textContent = 'Sent ✓';
+      $('again').hidden = false;
+    } else {
+      setStatus('fail', 'Did not send — ' + (out.error || ('error ' + res.status)) + '. Tap Finalise report to try again.');
+      sending = false;
+      $('go').disabled = false;
+    }
+  } catch (e) {
+    setStatus('warn', 'No signal — nothing has sent yet. Keep this screen open and tap Finalise report again when you have a bar or two.');
+    sending = false;
+    $('go').disabled = false;
   }
-  // fallback: open mail with details (no attachment), tell the user to attach
-  const href = 'mailto:' + encodeURIComponent(to) +
-               '?subject=' + encodeURIComponent(subj) +
-               '&body=' + encodeURIComponent(body + '\n\n[Attach the photo(s) from your library.]');
-  location.href = href;
-  $('hint').textContent = 'Your share sheet is unavailable, so Mail opened without the photos — attach them from your library before sending.';
 });
 
 update();
