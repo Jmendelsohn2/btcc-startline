@@ -337,13 +337,13 @@ function renderTimed(){
   }
   h += '</div>';
 
-  const firstK = Math.max(0, extra - 4);   // last 5 crossings
+  const firstK = Math.max(0, extra - 7);   // last 8 crossings
   h += '<div class="section-label">Final laps</div>';
   h += '<table class="t2"><tr><th>Clock left</th><th>Signal</th></tr>';
   for (let k = firstK; k <= extra; k++) {
     const isFlag = k === extra, isBoard = k === extra - 1;
     const cls = isFlag ? 'r-flag' : (isBoard ? 'r-board' : '');
-    const clock = isFlag ? '—' : mmss(timeRem - k * lapTime);
+    const clock = isFlag ? (pastZero > 0 ? '—' : mmss(0)) : mmss(timeRem - k * lapTime);
     let sig = isFlag ? 'Chequered Flag' : (isBoard ? 'Last Lap Board' : '');
     if (isFlag && pastZero > 0) sig += '  (+' + mmss(pastZero) + ')';
     h += '<tr class="' + cls + '"><td>' + clock + '</td><td>' + sig + '</td></tr>';
@@ -393,13 +393,13 @@ function renderLaps(){
   }
   h += '</div>';
 
-  const firstRow = Math.max(startLap, flagLap - 4);   // last 5 laps
+  const firstRow = Math.max(startLap, flagLap - 7);   // last 8 laps
   h += '<div class="section-label">Final laps</div>';
   h += '<table class="t3"><tr><th>Lap</th><th>Clock left</th><th>Signal</th></tr>';
   for (let lap = firstRow; lap <= flagLap; lap++) {
     const isFlag = lap === flagLap, isBoard = lap === boardLap;
     const cls = isFlag ? 'r-flag' : (isBoard ? 'r-board' + (isLaps ? ' islaps' : '') : '');
-    const clock = (!isLaps && isFlag) ? '—' : mmss(clockAt(lap));
+    const clock = (!isLaps && isFlag && pastZero > 0) ? '—' : mmss(clockAt(lap));
     let sig = isFlag ? 'Chequered Flag' : (isBoard ? (boardReq ? 'Last Lap Board' : 'Last Lap') : '');
     if (isFlag && !isLaps && pastZero > 0) sig += '  (+' + mmss(pastZero) + ')';
     h += '<tr class="' + cls + '"><td>' + lap + '</td><td>' + clock + '</td><td>' + sig + '</td></tr>';
